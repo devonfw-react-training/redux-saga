@@ -5,6 +5,7 @@ import createSagaMiddleware from "redux-saga";
 import { reducer as toastrReducer } from "react-redux-toastr";
 
 import books from "./books/books.slice";
+import userInfo from "./userInfo.slice";
 import { rootSaga } from "./root.saga";
 
 export const history = createBrowserHistory();
@@ -15,6 +16,7 @@ const sagaMiddleware = createSagaMiddleware();
 export const store = configureStore({
   reducer: {
     books,
+    userInfo,
     toastr: toastrReducer,
     ...createRouterReducerMapObject(history),
   },
