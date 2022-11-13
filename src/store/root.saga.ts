@@ -2,7 +2,10 @@ import { call, cancelled, delay, fork, put, race, select, takeEvery } from "redu
 import { actions } from "react-redux-toastr";
 import { setName } from "./userInfo.slice";
 import { RootState } from "./store";
-import { create } from "./books/books.slice";
+import { allBooksSelector, create, oneBookSelector } from "./books/books.slice";
+import { LocationChangeAction, ROUTER_ON_LOCATION_CHANGED } from "@lagunovsky/redux-react-router";
+import { AnyAction } from "@reduxjs/toolkit";
+import { Book } from "../book/book";
 
 function* getNameFlow() {
   let name = localStorage.getItem("name");
@@ -68,12 +71,7 @@ export function* raceExample() {
   console.log("Result", result);
 }
 
-export function* rootSaga() {
-  yield call(welcomeSaga);
-  yield fork(raceExample);
-
-  yield takeEvery(create, bookCreatedFlow);
-
+function* bookInfoFlow(action: LocationChangeAction) {
   /***
    * Homework
    *
@@ -87,4 +85,24 @@ export function* rootSaga() {
    * hint: for type definition you can use LocationChangeAction type
    * hint: You need to get book id from location
    */
+  const id = action.payload.location.pathname.split('/').at(-1);
+  const books: Book[] = yield select(allBooksSelector);
+  const book = books.find(b => b.id === parseInt(id!));
+
+  if (!book) return;
+
+  yield put(actions.add({
+    type: 'info',
+    title: `You are watching ${book.title} book`,
+  }));
+}
+
+export function* rootSaga() {
+  yield call(welcomeSaga);
+  yield fork(raceExample);
+
+  yield takeEvery(create, bookCreatedFlow);
+
+  const pattern = (a: AnyAction) => a.type === ROUTER_ON_LOCATION_CHANGED && a.payload.location.pathname.includes('/book-app/book/');
+  yield takeEvery(pattern, bookInfoFlow);
 }
